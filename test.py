@@ -1,57 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
-
-# In[1]:
-
-
 import pandas as pd
-
-
-# In[2]:
 
 
 path  = ''
 def loadfile(filename):
     return pd.read_excel(path+filename+'.xlsx', sheet_name=None)
-
-
-# In[155]:
-
-
 dfdict = loadfile('schedules')
 
 
-# In[4]:
 
-
-for sheetname in dfdict:
-    print (sheetname)
-
-
-# # Equipment cost measured with equipment day
-
-# In[5]:
-
-
-relocation = dfdict['relocation'].copy()
-relocation
-
-
-# In[ ]:
-
-
-# Confirming no nagative 
-
-
-# In[ ]:
-
-
-*temp['direction']
-
-
-# In[ ]:
-
-
+# Confirming no nagative in relocation record
 def testnagative(df):
     
     df['dquantity'] = df['quantity']*df['direction']
@@ -63,17 +22,10 @@ def testnagative(df):
             print ('error'+str(date))
             return date
     return 0
+# example
+testnagative(dfdict['relocation'])
 
-
-# In[ ]:
-
-
-testnagative(relocation)
-
-
-# In[207]:
-
-
+# Equipment cost measured with equipment day:
 def daycount(df,datetext):
     
     df['dateacc'] =  (pd.to_datetime(datetext)-df['date']).dt.days.clip(lower=0)
@@ -87,62 +39,24 @@ def perioddaycount(df,start,end):
     return (daycount(df,end)-daycount(df,start)).dropna()
 
 
-# # Standard cost
-
-# In[65]:
-
-
-dailycost = dfdict['equip_dailycost'].dropna().set_index('equip_type_name')
-
-
-# In[204]:
-
-
+# Standard cost
 def periodstandardcost(locationdf,standardcostdf,start,end, costestimation = 'cost_day_std'):
     stdcostdf = perioddaycount(locationdf,start,end).join(standardcostdf).dropna()
-    
-    
+       
     stdcostdf['standard_cost'] = stdcostdf['dateaccd']*stdcostdf[costestimation]
     
     return stdcostdf[stdcostdf['standard_cost']>0][['standard_cost']]
 
-
-# In[208]:
-
-
-periodstandardcost(relocation, dailycost, '2021-01-01','2021-02-01','cost_day_high')
-
-
-# In[206]:
-
+# example
+dailycost = dfdict['equip_dailycost'].dropna().set_index('equip_type_name')
+relocation = dfdict['relocation']
+start_at= '2021-01-01'
+end_at = '2021-02-01'
+cost_method = 'cost_day_high' # or 'cost_day_std
+periodstandardcost(relocation, dailycost, start_at, end_at , cost_method)
 
 
-
-
-# In[ ]:
-
-
-
-
-
-# # Accrual revenue
-
-# In[ ]:
-
-
-# assuming the price is combined price
-
-
-# In[11]:
-
-
-vq = dfdict['vq']
-vq_equip = dfdict['vq_equip']
-
-
-# In[247]:
-
-
+# # Accrual revenue : assuming the price is combined price
 def periodrevenue(locationdf, visual_query, visual_query_equipment, start, end):
     
     rentdf = visual_query[['q_id','qt_id','rent_daily']].join(
@@ -163,18 +77,16 @@ def periodrevenue(locationdf, visual_query, visual_query_equipment, start, end):
     
     return revenuedf[['q_period_revenue']]
 
-
-# In[246]:
-
-
-
+# example
+relocation = dfdict['relocation']
+vq = dfdict['vq']
+vq_equip = dfdict['vq_equip']
+start_at= '2021-01-01'
+end_at = '2021-02-01'
+periodrevenue(relocation, vq, vq_equip, start, end)
 
 
 # # Client value
-
-# In[228]:
-
-
 def clientvalue(location,visual_query,visual_query_equipment, dailycost, start,end,costing = 'cost_day_std'):
 
     df = pd.concat([
@@ -202,46 +114,17 @@ def clientvalue(location,visual_query,visual_query_equipment, dailycost, start,e
     
     return df
 
-
-# In[229]:
-
-
-clientvalue(relocation,vq,vq_equip,dailycost,'2021-01-01','2021-02-01')
-
-
-# In[200]:
-
-
-periodrevenue(
-            relocation,vq,vq_equip,'2021-01-01','2021-02-01'
-        )
+# example:
+relocation = dfdict['relocation']
+vq = dfdict['vq']
+vq_equip = dfdict['vq_equip']
+start_at= '2021-01-01'
+end_at = '2021-02-01'
+dailycost = dfdict['equip_dailycost'].dropna().set_index('equip_type_name')
+clientvalue(relocation,vq,vq_equip,dailycost,start_at,end_at)
 
 
-# In[79]:
-
-
-
-
-
-# In[80]:
-
-
-
-df
-
-
-# # Contract Clearing
-
-# In[60]:
-
-
-invoice = dfdict['invoice']
-bank = dfdict['bankstatement']
-
-
-# In[135]:
-
-
+# Contract clearing
 def period_invoice(df,start,end):
       
     return df[(df['date']>pd.to_datetime(start)) &
@@ -274,25 +157,15 @@ def getcontractclearing(invoice,bank,start,end):
         on = 'client_id'
     ).fillna(0)
 
-
-# In[193]:
-
-
-getcontractclearing(invoice,bank,'1990-01-01','2021-03-01')
+invoice = dfdict['invoice']
+bank = dfdict['bankstatement']
+start_at= '2021-01-01'
+end_at = '2021-02-01'
+getcontractclearing(invoice,bank,start_at,end_at)
 
 
 # # PM of the sales
-
-# In[234]:
-
-
-qwmapping = dfdict['quot_worker_mapping']
-
-
-# In[298]:
-
-
-def salespm(location,visual_query,visual_query_equipment, dailycost, start,end,costing = 'cost_day_std'):
+def salespm(location,visual_query,visual_query_equipment, dailycost, qwmapping, start,end,costing = 'cost_day_std'):
 
     df = periodrevenue(relocation,vq,vq_equip,'2021-01-01','2021-02-01').join(qwmapping[['qt_id','worker_id','percent']].set_index('qt_id'))
     
@@ -313,56 +186,16 @@ def salespm(location,visual_query,visual_query_equipment, dailycost, start,end,c
 
 
 # In[301]:
-
-
-salespm(relocation,vq,vq_equip,dailycost,'2021-01-01','2021-02-01')
+relocation = dfdict['relocation']
+vq = dfdict['vq']
+vq_equip = dfdict['vq_equip']
+dailycost = dfdict['equip_dailycost'].dropna().set_index('equip_type_name')
+workerportion = dfdict['quot_worker_mapping']
+start_at= '2021-01-01'
+end_at = '2021-02-01'
+salespm(relocation,vq,vq_equip,dailycost, workerportion ,start_at,end_at)
 
 
 # # Financial reports
-
-# In[310]:
-
-
 bank[['ma_account_id','ma_account','amount']].groupby(['ma_account_id','ma_account']).sum()
-
-
-# In[ ]:
-
-
-df[['worker_id','revenueforperson']].groupby('worker_id').sum()
-
-
-# In[307]:
-
-
-bank
-
-
-# In[236]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[233]:
-
-
-temp.join(
-        # Then added external party lable
-        vq[['qt_id','ep_id']].drop_duplicates().set_index('q_id')
-    ).reset_index(
-        # And accumulate numbers based on exetnal party
-    ).groupby('ep_id').sum()
-
-
-# In[ ]:
-
-
-
 
