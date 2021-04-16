@@ -134,5 +134,8 @@ Version control is easy. | Need efforts on coding for version control
 Preventing the change of data  | Useful if more people were involved but currently there is only one user. 
 Easy to be linked with PHP | Can be used to providing information and collecting information from the users when the system can accommodate more users. 
 
-Therefore, the decision is to keep using schedules during the prototyping, but consider to switch to DBMS if the CEO need to access the data remotely. 
+Therefore, the decision is to keep using schedules during the prototyping, but consider to switch to DBMS if the CEO need to access the data remotely. This information is provided to the financial manager during the second meeting so that an expectation of further changes could be formed. 
 
+## New feature proposed: human resource related expenses
+The accrual journal entries are, obviously, limited to the accrual revenues and costs, but also, the salaries and expenses. Thus, the salary and reimbursement can also be added to this system. During the meeting, the financial manager suggested to provide the journals about the salary and reimbursement but the advisor asked further about how the journals were made. As a result, the source of such journals, which is another form used by the human resource was talked about during the meeting and the manager agrees to provide an example for the form as a part of the schedule so that the system can incorporate such form to produce the final report as well as the human resource report. 
+This change was supported by the proactive advisor and shows the possibility that the scope of such MIS shall reflect the need for the company instead of the pre-determined development contract. 
