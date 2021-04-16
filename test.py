@@ -1,15 +1,30 @@
 #!/usr/bin/env python
 # coding: utf-8
+
+#%%
 import pandas as pd
 
 
 path  = ''
 def loadfile(filename):
     return pd.read_excel(path+filename+'.xlsx', sheet_name=None)
-dfdict = loadfile('schedules')
+
+print ('input filename with path excluding .xlsx')
+PATH = input()
+
+dfdict = loadfile(PATH)
+
+results = {}
 
 
+# %%
+print ('Starting at:')
+START = input()
+print ('Ending at:')
+END = input()
 
+
+#%%
 # Confirming no nagative in relocation record
 def testnagative(df):
     
@@ -24,7 +39,7 @@ def testnagative(df):
     return 0
 # example
 testnagative(dfdict['relocation'])
-
+#%%
 # Equipment cost measured with equipment day:
 def daycount(df,datetext):
     
@@ -50,12 +65,14 @@ def periodstandardcost(locationdf,standardcostdf,start,end, costestimation = 'co
 # example
 dailycost = dfdict['equip_dailycost'].dropna().set_index('equip_type_name')
 relocation = dfdict['relocation']
-start_at= '2021-01-01'
-end_at = '2021-02-01'
+start_at= START
+end_at = END
 cost_method = 'cost_day_high' # or 'cost_day_std
-periodstandardcost(relocation, dailycost, start_at, end_at , cost_method)
+results['period_std_cost'] = periodstandardcost(relocation, dailycost, start_at, end_at , cost_method)
+results['period_std_cost']
 
 
+#%%
 # # Accrual revenue : assuming the price is combined price
 def periodrevenue(locationdf, visual_query, visual_query_equipment, start, end):
     
@@ -81,11 +98,12 @@ def periodrevenue(locationdf, visual_query, visual_query_equipment, start, end):
 relocation = dfdict['relocation']
 vq = dfdict['vq']
 vq_equip = dfdict['vq_equip']
-start_at= '2021-01-01'
-end_at = '2021-02-01'
-periodrevenue(relocation, vq, vq_equip, start, end)
+start_at= START
+end_at = END
+results['period_rev'] = periodrevenue(relocation, vq, vq_equip, start_at, end_at)
+results['period_rev']
 
-
+#%%
 # # Client value
 def clientvalue(location,visual_query,visual_query_equipment, dailycost, start,end,costing = 'cost_day_std'):
 
@@ -118,12 +136,12 @@ def clientvalue(location,visual_query,visual_query_equipment, dailycost, start,e
 relocation = dfdict['relocation']
 vq = dfdict['vq']
 vq_equip = dfdict['vq_equip']
-start_at= '2021-01-01'
-end_at = '2021-02-01'
+start_at= START
+end_at = END
 dailycost = dfdict['equip_dailycost'].dropna().set_index('equip_type_name')
-clientvalue(relocation,vq,vq_equip,dailycost,start_at,end_at)
-
-
+results['client_value'] = clientvalue(relocation,vq,vq_equip,dailycost,start_at,end_at)
+results['client_value']
+#%%
 # Contract clearing
 def period_invoice(df,start,end):
       
@@ -159,11 +177,11 @@ def getcontractclearing(invoice,bank,start,end):
 
 invoice = dfdict['invoice']
 bank = dfdict['bankstatement']
-start_at= '2021-01-01'
-end_at = '2021-02-01'
-getcontractclearing(invoice,bank,start_at,end_at)
-
-
+start_at= START
+end_at = END
+results['contract_clearing'] = getcontractclearing(invoice,bank,start_at,end_at)
+results['contract_clearing']
+#%%
 # # PM of the sales
 def salespm(location,visual_query,visual_query_equipment, dailycost, qwmapping, start,end,costing = 'cost_day_std'):
 
@@ -185,17 +203,21 @@ def salespm(location,visual_query,visual_query_equipment, dailycost, qwmapping, 
     return returningdf
 
 
-# In[301]:
 relocation = dfdict['relocation']
 vq = dfdict['vq']
 vq_equip = dfdict['vq_equip']
 dailycost = dfdict['equip_dailycost'].dropna().set_index('equip_type_name')
 workerportion = dfdict['quot_worker_mapping']
-start_at= '2021-01-01'
-end_at = '2021-02-01'
-salespm(relocation,vq,vq_equip,dailycost, workerportion ,start_at,end_at)
-
-
+start_at= START
+end_at = END
+results['PM_salesperson'] = salespm(relocation,vq,vq_equip,dailycost, workerportion ,start_at,end_at)
+results['PM_salesperson']
+#%%
 # # Financial reports
-bank[['ma_account_id','ma_account','amount']].groupby(['ma_account_id','ma_account']).sum()
+results['FR_slice'] = bank[['ma_account_id','ma_account','amount']].groupby(['ma_account_id','ma_account']).sum()
+results['FR_slice']
 
+#%%
+with pd.ExcelWriter('result_'+START+'_'+END+'.xlsx') as writer: # pylint: disable=abstract-class-instantiated
+    for key in results:
+        results[key].to_excel(writer, sheet_name = key)
