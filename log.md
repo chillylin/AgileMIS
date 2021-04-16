@@ -101,3 +101,38 @@ A lack of training ( the preparer of the data ) | Provide additional training
 Manual processing | Ask the preparer to retake
 Missing data due to the original provider | Ask the preparer to find alternative data 
 
+# Second meeting
+The second meeting between the advisor and the financial manager is to provide the code which can already provide basic figures, as well as train the financial manager to use the system and get feedback.  
+
+## Considering the method of implement: as binaries or as code
+
+1. Binaries: easy to use but difficult to alter. No need for training. Especially, if the system was written in C++ the size of binaries would be small but since Python is used, the binary could be rather large and time consuming for re-compile for each change. 
+1. Code: The usage of code would requires basic training such as "select the correct Anaconda prompt" and "type the correct path". However, since the user is only one person, the cost of training is not very high. 
+
+## The method of data storage
+
+Before the first test, the storage issues were intentionally omitted. Since the most important issue is to prove the concept of the MIS. However, the storage shall be considered once the usefulness is proven. 
+
+There are two methods of data storage: Directly use the schedules input file as storage when the file become too big, then use another schedules file and let the code to read all schedule files., or, Load schedule into SQLite or other DBMS.  
+
+Using schedules:
+
+Benefits | Explanation
+--- | ---
+No extra efforts were needed| if the required input data changes, no further adaption on DBMS is needed.
+The user can alter numbers on the schedules file easily | No need to develop database related functions in modify data  
+Draw backs|Explanation
+The version control of schedules could be difficult  | Could only rely on the users to control the files
+The result cannot be accessed remotely | Can be overcome by sending the periodic report by email which is safer than setting up a server by the company.  
+
+
+Using DBMS :
+Benefits | Explanation
+--- | ---
+The integrity of data could be easily managed | But the key of MIS is to providing information instead of accurate storage. 
+Version control is easy. | Need efforts on coding for version control 
+Preventing the change of data  | Useful if more people were involved but currently there is only one user. 
+Easy to be linked with PHP | Can be used to providing information and collecting information from the users when the system can accommodate more users. 
+
+Therefore, the decision is to keep using schedules during the prototyping, but consider to switch to DBMS if the CEO need to access the data remotely. 
+
