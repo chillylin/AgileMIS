@@ -80,10 +80,10 @@ Thus, the key intermediate data are "accrual revenue" and "standard cost".
 The list of module
 1. (done) Equipment cost per contract measured by equipment*day (ED): with respect to the type of equipment. 
 1. (done) Accrual revenue for each contract: Based on the contract information and ED
-1. (done) Standard cost for each contract: Based on the cost estimation and ED 
+1. (done) Standard cost for each contract: Based on the cost estimation and ED 1. 
 1. (done) Contract clearing
-1. (done) Contract PM
-1. (done) Sales PM
+1. Contract PM 
+1. Sales PM ( adding the time between equipment leaving site and invoicing, and the time between invoicing and receiving money, also add the amount of invoicing and the amount of expense incurred as well as the amount of collected sales)
 1. (done) Customer value
 1. Periodic financial reporting
 1. Cash budget
@@ -136,6 +136,16 @@ Easy to be linked with PHP | Can be used to providing information and collecting
 
 Therefore, the decision is to keep using schedules during the prototyping, but consider to switch to DBMS if the CEO need to access the data remotely. This information is provided to the financial manager during the second meeting so that an expectation of further changes could be formed. 
 
-## New feature proposed: human resource related expenses
+# New feature proposed: human resource related expenses
 The accrual journal entries are, obviously, limited to the accrual revenues and costs, but also, the salaries and expenses. Thus, the salary and reimbursement can also be added to this system. During the meeting, the financial manager suggested to provide the journals about the salary and reimbursement but the advisor asked further about how the journals were made. As a result, the source of such journals, which is another form used by the human resource was talked about during the meeting and the manager agrees to provide an example for the form as a part of the schedule so that the system can incorporate such form to produce the final report as well as the human resource report. 
 This change was supported by the proactive advisor and shows the possibility that the scope of such MIS shall reflect the need for the company instead of the pre-determined development contract. 
+
+# New Requirements
+The financial manager found another type of sales contract which specified a total amount of required service with a total amount of revenue. Such contract allows to provide more weaker machines as substitutes of fewer but strong machines. To accommodate such new contract, three modification is planned.
+1. In sheet _vq_: Terms shall be _0_ in this type of contract 
+1. In sheet _vq_: Daily amount shall be _total revenue_
+1. To allocate the revenue to correct month, a new sheet is introduced to provide the information only for this contract about: 
+    1. Starting date
+    1. Ending date
+
+In sheet _relocation_, the information of different equipment is inserted so that the standard cost can be calculated. 
