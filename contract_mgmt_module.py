@@ -288,7 +288,7 @@ def create_view_standardcost(start,end):
             q_id, 
             machinedaysummary.equip_type_name, 
             machinedaysummary.equip_type_id,
-            cost_day_std * Machine_days_for_the_period AS Standard_machine_cost_for_the_period 
+            cost_day_std * Machi               ne_days_for_the_period AS Standard_machine_cost_for_the_period 
         FROM machinedaysummary
 
         LEFT JOIN  equip_dailycost 
@@ -544,3 +544,32 @@ def create_view_ClientRecovery(start,end):
 def show_ClientRecovery(start,end):
     create_view_ClientRecovery(start,end)
     return show('client_Recovery_report').fillna(0)
+
+def create_view_ContractClearing(start, end):
+    
+    
+    create_view_contract_recovery(start, end)
+
+    ### Combined, still need opening balance 
+    con.execute(
+    'DROP VIEW IF EXISTS Client_clearing;'
+    )
+
+    con.execute("""
+    CREATE VIEW Client_clearing AS
+
+    SELECT 
+        ep_id,
+        ep_name, 
+        Received_amount, 
+        Invoiced_Total 
+    FROM receipt_for_the_period_by_client 
+    JOIN invoice_for_the_period 
+    ON receipt_for_the_period_by_client.ep_id = invoice_for_the_period.client_id
+    """)
+    
+def show_ContractClearing(start, end):
+    create_view_ContractClearing(start, end)
+    
+    return show('Client_clearing')
+
