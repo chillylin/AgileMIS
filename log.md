@@ -58,7 +58,7 @@ No| Management need   |Note | Data needed correspondently
 4 | PM for sales    | The contribution and the recovery of debt for each sales person  | Cash & Accrual revenue & standard cost
 5 | Customer value  | Profitability of each customer/Invoicing and collection of each customer |Invoice & Cash & Accrual revenue & Standard cost
 6 | PM for equipment                    | Measure the success of procurement and maintenance of equipment | Standard cost & depreciation & Cash 
-7 | Cash budgeting | | Cash
+7 | Cash budgeting | | Cash 
 
 ## The source of each data can be collected by 
 
@@ -82,11 +82,12 @@ The list of module
 1. (done) Accrual revenue for each contract: Based on the contract information and ED
 1. (done) Standard cost for each contract: Based on the cost estimation and ED 1. 
 1. (done) Contract clearing
+    1. (WIP) days for AP collection ( need for vq label on bank statements)
 1. Contract PM 
 1. Sales PM ( adding the time between equipment leaving site and invoicing, and the time between invoicing and receiving money, also add the amount of invoicing and the amount of expense incurred as well as the amount of collected sales)
 1. (done) Customer value
-1. Periodic financial reporting
-1. Cash budget
+1. Periodic financial reporting (need integration with other systems)
+1. Cash budget 
 1. Equipment PM (need PPE accounting numbers)
 
 ## standard cost rate
@@ -140,7 +141,7 @@ Therefore, the decision is to keep using schedules during the prototyping, but c
 The accrual journal entries are, obviously, limited to the accrual revenues and costs, but also, the salaries and expenses. Thus, the salary and reimbursement can also be added to this system. During the meeting, the financial manager suggested to provide the journals about the salary and reimbursement but the advisor asked further about how the journals were made. As a result, the source of such journals, which is another form used by the human resource was talked about during the meeting and the manager agrees to provide an example for the form as a part of the schedule so that the system can incorporate such form to produce the final report as well as the human resource report. 
 This change was supported by the proactive advisor and shows the possibility that the scope of such MIS shall reflect the need for the company instead of the pre-determined development contract. 
 
-# New Requirements
+# New type of contract: One price for undefined equipment and date
 The financial manager found another type of sales contract which specified a total amount of required service with a total amount of revenue. Such contract allows to provide more weaker machines as substitutes of fewer but strong machines. To accommodate such new contract, three modification is planned.
 1. In sheet _vq_: Terms shall be _0_ in this type of contract 
 1. In sheet _vq_: Daily amount shall be _total revenue_
@@ -149,3 +150,58 @@ The financial manager found another type of sales contract which specified a tot
     1. Ending date
 
 In sheet _relocation_, the information of different equipment is inserted so that the standard cost can be calculated. 
+
+# Possibilities on changing language
+
+Although pandas is a convenient tool for data manipulation, the learning cost could be high if a future operator would be employed to takeover the system. Also, SQL is easier to understand and maintain. It might be a good choice to migrate to SQL once the prototype is completed, as the prototyping need to be much more flexible than later phases. 
+
+# Overhaul
+The second phase proving Pandas is difficult to read and debug. Therefore, all codes are rewritten in SQL, leaving Python as the middle person between report generation and SQLite. 
+Selecting SQLite is based on the assumption that the system will not need to process too much data in the foreseeable future. 
+
+# Work ahead
+1. Contract performance management is still not testable since the raw data on bank statement does not show the mapping between the cash received and the quotations/contracts. (waiting for the update of bank statements)
+1. Sales persons PM also not testable for the same reason ( the performance of sales person is decided by the contracts they were working at.)
+1. Periodic financial reporting
+    1. Done for each account except AP, AR, OP/OR 
+    1. AP: Two methods shall be reconciled. The Invoice shall met the Manual adjustment entries, except those real non-income adjustment. Thus, the manual income recognition entries can be replaced by the invoicing table. 
+        1. B/F + Invoiced (From invoicing table) - Receipt (From bank statements) ( Done)
+        1. B/F + Manual Adjustment entries - Receipt (From bank statements) (WIP)
+    1. AR Previously no plan for supplier management, but according to the request of the CEO, this part will be implemented (see later notes.)
+    1. OP/OR: Only one method which is B/F + Manual Adjustment entries - Receipt (From bank statements) (WIP)
+1. Cash budget: waiting for the supplier management
+1. PPE management: waiting for a thoroughly physical counting and inspection of all equipment.  
+
+# Additional requirement on cash budget which lead to supplier management
+Since the CEO asked to make "reliable" cash budget which depends reliable prediction on both receipts(from clients) and payments(to suppliers), the current contract-revenue-focused system will not be enough. Grabbing this chance, the system development will expand its scope to supplier management. 
+
+Currently, the supplier management is fully out of the control of the finance manager until the payment is needed. The implementation of the system is also a method to build up internal control and information collection for the clients. 
+Identified process related to the supplier management involves the following aspects
+1. The purchase plan for: ( The CEO promised to provide such plan starting from the second half of the year, so just prepare for this part without actual development )
+    1. Capital investment
+    1. Predictable inventory procurement for daily consumption
+1. The Purchase Order: The procurement staff did not have a habit for recording purchase order which were merely contacting the supplier by phone. Sending email to ask the CEO to order the staff starting to recording purchase order and sharing with the finance manager. ( Later on, can develop a web-based interface to collect purchase order, if this system is not replaced by another ERP). Once the purchase order is recorded, the system shall recognise a "commitment" which is not yet a liability but will be shown on the budget.
+1. The receiving report: The administrator of assets shall produce a report that recorded the received goods from the suppliers. Once the receiving report is produced, a non-invoiced-liability shall be recognised both on the financial report, the supplier-clearing report, as well as the cash budget. 
+1. The invoice: once an invoice is received by the finance manager, the recognised non-invoiced-liability shall be converted to a invoiced-liability. Also, the reports mentioned above shall be amended. Especially, invoiced means the amount need to be paid shortly and the fact shall be reflected on the cash budget.
+
+The purchase order and receiving report are two document that were missing but need to be prepared. The advisor sent emails to the CEO to explain the importance of the two documents, and presenting that with the two type of documents missing, reliable cash budgets will not be available. 
+
+# Current financial reporting setting
+
+1. Revenue cycle
+    1. Revenue recognition: 
+        1. Rent income:Contract/Client management system (Need for integration)
+        2. Non-contract income: AJE 
+    2. Receipt: Bank statement (No need to change)
+    3. Impairment: Contract/Client management system
+1. Procurement cycle
+    1. Procurement recognition
+        1. Formal procurement: Supplier management system (Not built yet)
+        1. Reimbursement: Reimbursement module (Not built yet)
+    1. Payment: Bank statement  (No need to change)
+1. HR cycle
+    1. Recognition: Payroll system (Need for integration)
+    1. Payment: Bank statement (No need to change)
+1. PPE Cycle
+    1. Standard costing: standard costing system (Need for integration)
+    1. Depreciation: Depreciation system (Need for integration)
