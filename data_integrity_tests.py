@@ -22,3 +22,18 @@ def is_relocation_nagative(conn):
 
 is_relocation_nagative(con)
 
+def reconcile_bf_account_vs_externalparties(conn):
+
+    conn.execute(
+    'DROP VIEW IF EXISTS ReconcileEPBF ;'
+    )
+
+    conn.execute("""
+    CREATE VIEW ReconcileEPBF AS
+
+    SELECT ma_account_id, bf_amount - EPSUM AS BFDIFF FROM (SELECT ma_account_id AS MID, SUM(amount) AS EPSUM FROM ep_bf GROUP BY ma_account_id)
+    LEFT JOIN (SELECT bf_amount, ma_account_id FROM account_bf) on MID = ma_account_id
+    """)
+    return pd.read_sql_query("SELECT * FROM ReconcileEPBF" %(table), conn)
+
+reconcile_bf_account_vs_externalparties(con)
