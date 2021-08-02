@@ -37,3 +37,19 @@ def reconcile_bf_account_vs_externalparties(conn):
     return pd.read_sql_query("SELECT * FROM ReconcileEPBF" %(table), conn)
 
 reconcile_bf_account_vs_externalparties(con)
+
+def check_bankstatement_for_missing_ep_id(conn):
+    conn.execute(
+    'DROP VIEW IF EXISTS invalid_ep_id_bank ;'
+    )
+
+    conn.execute("""
+    CREATE VIEW invalid_ep_id_bank AS
+
+    SELECT * FROM (SELECT ma_account_id AS MID FROM chart_of_accounts WHERE AP_AR = 1)
+    LEFT JOIN ( SELECT ma_account_id AS MID2, ep_id, amount FROM bankstatement) 
+    ON MID = MID2 WHERE NOT MID2 IS NULL AND ep_id IS NULL
+    """)
+    
+    return pd.read_sql_query("SELECT * FROM invalid_ep_id_bank", conn)
+check_bankstatement_for_missing_ep_id(con)
