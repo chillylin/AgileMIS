@@ -1,6 +1,8 @@
 import sqlite3
 import pandas as pd
 
+
+bfdatadate = "2020-12-31"
 path = './'
 dbfilename = 'test01'
 
@@ -38,9 +40,9 @@ class xp:
 #### For bank transactions, two query is needed to get the bank side (Query Beta) and the opposite side (Query Alpha). 
 ## Then add the bring forward 
 
-def getpoint(viewname, cuttingdate):
+def create_view_fp_as_at(viewname,cuttingdate):
     
-    bf_date = '2020-12-31'
+    bf_date = bfdatadate
     
     # (Query Alfa0): 
     # Notice the amount is negative because the amount is recorded as transaction of bank
@@ -195,11 +197,13 @@ def getpoint(viewname, cuttingdate):
         LEFT JOIN account_bf ON chart_of_accounts.ma_account_id = account_bf.ma_account_id)
     """%(viewname,viewname,viewname))
     
-    return show('balance_at_'+viewname)
+def show_fp_as_at(cuttingdate):    
+    create_view_fp_as_at('frtemp',cuttingdate)
+    return pd.read_sql_query("SELECT * FROM balance_at_frtemp", con)
 
 # Get duration data for income statement
 
-def getduration(viewname, starting, ending):
+def create_view_pl_for(viewname, starting, ending):
 
     # (Query Alfa0: 
     # Notice the amount is negative because the amount is recorded as transaction of bank
@@ -358,8 +362,12 @@ def getduration(viewname, starting, ending):
     
     return show('during'+viewname)
 
-# Get the data between two dates for cashflow reports
-def getdurationCF(viewname, starting, ending):
+def show_pl_for(starting, ending):    
+    create_view_pl_for("pltemp", starting, ending)
+    return pd.read_sql_query("SELECT * FROM duringpltemp", con)
+
+# create a view for the cashflow between two dates for cashflow reports
+def create_view_cf_for(viewname, starting, ending):
 
     con.execute(
     'DROP VIEW IF EXISTS CF_for_%s;'%(viewname)
@@ -385,7 +393,10 @@ def getdurationCF(viewname, starting, ending):
 
     """%(viewname,starting, ending) )
     
-    return show("CF_for_%s"%(viewname))    
+# Get the data between two dates for cashflow reports
+def show_cf_for(starting, ending):    
+    create_view_cf_for("cftemp", starting, ending)
+    return pd.read_sql_query("SELECT * FROM CF_for_cftemp", con)
 
 # Compile data into financial reports according to the template and mapping
 # A template is the format of a report. From each item to the final report
@@ -466,7 +477,7 @@ for closing in cuttingdates.astype(str):
         statementpreparing(
             fptemplate, 
             fpmapping, 
-            getpoint(closing[5:7],closing), 
+            show_fp_as_at(closing[5:7],closing), 
             'FP', 
             closing[5:7]).set_index('Report')    
     )
@@ -477,7 +488,7 @@ for closing in cuttingdates.astype(str):
             statementpreparing(
                 pltemplate, 
                 plmapping, 
-                getduration(closing[5:7],opening,closing), 
+                show_pl_for(closing[5:7],opening,closing), 
                 'PL', 
                 closing[5:7]).set_index('Report')
             )
@@ -487,7 +498,7 @@ for closing in cuttingdates.astype(str):
             statementpreparing(
                 cftemplate, 
                 cfmapping, 
-                getdurationCF(closing[5:7],opening,closing), 
+                show_cf_for(closing[5:7],opening,closing), 
                 'CF', 
                 closing[5:7]).set_index('Report')
             )
