@@ -41,6 +41,12 @@ class mis:
         except:
             print ('Cannot connect to database.')
 
+    def disconnect(self):
+        try: 
+            self.con.close()
+        except:
+            print ('Cannot proceed disconnection')
+
     def show(self, tablename):
         return pd.read_sql_query("SELECT * FROM %s" %(tablename), self.con)
 
@@ -1292,7 +1298,7 @@ class mis:
         return returndf.fillna(0)
         
 
-    def processingpayroll(self, year, month):
+    def payroll_processing(self, year, month):
         # Get payrol for one month
         
         self.create_view_paymentprocess(year, month)
@@ -1305,3 +1311,113 @@ class mis:
 
         return pd.concat(dfs).fillna(0).reset_index().reindex([0,5,1,2,3,6,8,9,10,11,12])
         
+# Depreciation
+
+    def create_view_PPE_list(self):
+
+        self.con.execute(
+        "DROP VIEW IF EXISTS TEMPPPE;"
+        )
+
+        self.con.execute(
+        """
+        CREATE VIEW TEMPPPE AS
+
+        SELECT *,  
+            CAST(SUBSTR(Starting,1,4)AS INT) AS SYEAR, 
+            CAST(SUBSTR(Starting,6,2)AS INT) AS SMONTH 
+        FROM PPE_list;
+        """
+        )
+
+    def create_view_depr_by_user(self,year,month):
+
+        self.create_view_PPE_list()
+
+        self.con.execute(
+        "DROP VIEW IF EXISTS DEPR_BY_USER;"
+        )
+
+        self.con.execute(
+        """
+        CREATE VIEW DEPR_BY_USER AS
+
+        SELECT 
+            company,
+            PPE_user,
+            ROUND(SUM(
+                ROUND ( 
+                (Historical_cost - residual_value) / life * 
+            
+                ( 
+                    MIN(MAX(0, (%s - SYEAR) * 12 +  %s- SMONTH  ), life) - 
+                    MIN(MAX(0, (%s - SYEAR) * 12 +  %s- SMONTH  ), life) 
+                ) 
+                ,2) 
+                
+            ),2) AS CurrentDep
+            
+        FROM TEMPPPE
+        GROUP BY company, PPE_user
+        """ % (year, month, year, str(int(month)-1) )
+        )
+
+    def create_view_depr_JE(self, year, month):
+
+        self.create_view_depr_by_user(year,month)
+
+        self.con.execute(
+        "DROP VIEW IF EXISTS DEPR_JE;"
+        )
+
+        self.con.execute(
+        """
+
+        CREATE VIEW DEPR_JE AS
+
+        SELECT * FROM (
+
+        SELECT 
+            Company AS entity,
+            "%s-%s-01" AS date,
+            "DEP01" AS JE_No,
+            ma_account_id,
+            "" AS ma_account_name,
+            "" AS ep_name,
+            CurrentDep AS amount,
+            CurrentDep AS Debit,
+            0 AS Credit,
+            "" AS ep_id,
+            "DEP" AS je_type,
+            SUBSTR(ma_account_id,3,4) AS top,
+            SUBSTR(ma_account_id,3,20) AS pure_account_id
+        FROM DEPR_BY_USER
+        LEFT JOIN deprAlloc 
+        ON DEPR_BY_USER.PPE_user = deprAlloc.PPE_user
+
+        UNION
+
+        SELECT 
+            company AS entity,
+            "%s-%s-01" AS date,
+            "DEP01" AS JE_No,
+            "MA1062" AS ma_account_name,
+            "" AS ma_account_name,
+            "" AS ep_name,
+            - CurrentDep AS amount,
+            0 AS Debit,
+            SUM(CurrentDep) AS Credit,
+            "" AS ep_id,
+            "DEP" AS je_type,
+            "1602" AS top,
+            "1602" AS pure_account_id
+            FROM DEPR_BY_USER
+        GROUP BY company
+        )
+
+
+        """%(year,month,year,month))
+
+    def show_depr_JE(self, year, month):
+        self.create_view_depr_JE( year, month)
+        return self.show("DEPR_JE")

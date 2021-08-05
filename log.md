@@ -205,3 +205,31 @@ The purchase order and receiving report are two document that were missing but n
 1. PPE Cycle
     1. Standard costing: standard costing system (Need for integration)
     1. Depreciation: Depreciation system (Need for integration)
+
+# Third phase: Update Aug 2021
+
+## Changes made to codes
+
+1. Efficiency improvement
+    1. Every function related to SQL are split into two functions.
+    1. The first function starts with "created_view_". The function only contains SQL command that create views.
+    1. The second function starts with "show". The function firstly call the first function to create the view, and then immediately retrieves data from the view to a pandas DataFrame.
+    1. When another module need views built by other functions, the new module only call the first function to create view, and no data extraction and data storage is needed until the final extraction. 
+1. Avoid global settings by creating a class.
+    1. Incorporate every function into a class
+    1. The class contains functions for reading the input file, and for writing data into a database.
+    1. The class contains functions to set parameters ( include templets) for financial reports. 
+1. Depreciation and payroll module is added. Although not implemented into AJE yet. 
+    
+## changes made to data
+1. Data for the first three month is reconciled with management accounting report. 
+    1. Bank statements were inconsistent with the journal entries of the management accounting report. (Bank statements was not designed to produce journal entries)
+    1. Adjustment journal entries were inconsistent with  the journal entries of the management accounting report.
+
+## Data error
+Still found many inconsistency in data. For example, payroll data is not consistent with the management accounts. These inconsistency occurs in many part showing that without a MIS, the data is redundant and inconsistent. Need to contact the financial manager for more reconciliation. 
+
+## Next steps
+1. Reconciliation between invoiced revenue, accrual revenue and current revenue per management reports.
+1. Reconciliation between payroll and current HR expenses per management reports.
+1. Reconciliation between PPE depreciation and current depreciation per management reports. 
